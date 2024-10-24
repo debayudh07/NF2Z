@@ -4,9 +4,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Web3Provider } from '@ethersproject/providers';
-import { formatEther } from '@ethersproject/units';
-import { useWallet } from "../_contexts/WalletContext";
+
 import {
   Activity,
   ArrowUpRight,
@@ -37,16 +35,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+
 import {
   Table,
   TableBody,
@@ -55,29 +44,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import Head from "next/head";
+
 import Header from "@/components/functions/Header";
 
 export default function NFTMarketplaceDashboard() {
   const [isLoaded, setIsLoaded] = useState(false)
-  const { account, connectWallet, disconnectWallet } = useWallet();
-  const [balance, setBalance] = useState<string>('0.00 ETH');
 
 
-  useEffect(() => {
-    const fetchBalance = async () => {
-      if (account && window.ethereum) {
-        const provider = new Web3Provider(window.ethereum);
-        const balanceInWei = await provider.getBalance(account);
-        const balanceInEth = parseFloat(formatEther(balanceInWei)).toFixed(4);
-        setBalance(`${balanceInEth} ETH`);
-      }
-    };
-    
-    if (account) {
-      fetchBalance();
-    }
-  }, [account]);
+
 
 
   useEffect(() => {
