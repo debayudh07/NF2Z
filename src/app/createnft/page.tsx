@@ -1,40 +1,41 @@
-"use client";
-
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import Header from "@/components/functions/Header";
-import axios from "axios";
-import { useWallet } from "../_contexts/WalletContext"; // Import Wallet Context
- import contractABi from "../contractABI";// Import the ABI from the JSON file
-import { ethers } from "ethers";
+"use client"
+import React, { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
+import { Boxes } from "@/components/ui/background-boxes"
+import { cn } from "@/lib/utils"
+import Header from "@/components/functions/Header"
+import axios from "axios"
+import { useWallet } from "../_contexts/WalletContext"
+import contractABi from "../contractABI"
+import { ethers } from "ethers"
 
 export default function NFTCreationForm() {
-  const { account, connectWallet } = useWallet(); // Use Wallet Context
+  const { account, connectWallet } = useWallet()
   const [form, setForm] = useState({
     name: "",
     description: "",
     price: "",
     image: null,
-  });
+  })
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target as HTMLInputElement | HTMLTextAreaElement;
-    const files = (e.target as HTMLInputElement).files;
+  const handleChange = (e: { target: { files?: any; name?: any; value?: any } }) => {
+    const { name, value } = e.target
+    const files = e.target.files
     setForm({
       ...form,
       [name]: files ? files[0] : value,
-    });
-  };
+    })
+  }
 
   const uploadToPinata = async () => {
-    const formData = new FormData();
+    const formData = new FormData()
     if (form.image) {
-      formData.append("file", form.image);
+      formData.append("file", form.image)
     } else {
-      throw new Error("No image file selected");
+      throw new Error("No image file selected")
     }
     try {
       const res = await axios.post("https://api.pinata.cloud/pinning/pinFileToIPFS", formData, {
@@ -43,66 +44,56 @@ export default function NFTCreationForm() {
           "pinata_secret_api_key": process.env.NEXT_PUBLIC_PINATA_SECRET_API_KEY,
           "Content-Type": "multipart/form-data",
         },
-      });
-      return `ipfs://${res.data.IpfsHash}`;
+      })
+      return `ipfs://${res.data.IpfsHash}`
     } catch (error) {
-      console.error("Error uploading image to IPFS:", error);
-      return null;
+      console.error("Error uploading image to IPFS:", error)
+      return null
     }
-  };
+  }
 
-  const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS; // Your deployed contract address
+  const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS
 
-  const createNFT = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const createNFT = async (e: { preventDefault: () => void }) => {
+    e.preventDefault()
 
     if (!account) {
-      alert("Please connect your wallet first!");
-      return;
+      alert("Please connect your wallet first!")
+      return
     }
 
-    const price = form.price;
     try {
-      const tokenURI = await uploadToPinata();
+      const tokenURI = await uploadToPinata()
       if (!tokenURI) {
-        alert("Image upload failed.");
-        return;
+        alert("Image upload failed.")
+        return
       }
 
-      // Set up provider and signer
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
+      const provider = new ethers.BrowserProvider(window.ethereum)
+      const signer = await provider.getSigner()
 
       if (!contractAddress) {
-        alert("Contract address is not defined.");
-        return;
+        alert("Contract address is not defined.")
+        return
       }
 
-      // Create contract instance using ABI and contract address
-      const contract = new ethers.Contract(contractAddress, contractABi, signer);
-
-      // Convert price to wei
-     
-
-      // Estimate gas for createToken function
-      const priceInWei = ethers.parseUnits(form.price, 'ether');
-
-      // Call the contract's createToken function
-      const transaction = await contract.createToken(tokenURI, priceInWei);
-      // Await transaction confirmation
-      await transaction.wait();
-      alert("NFT created successfully!");
+      const contract = new ethers.Contract(contractAddress, contractABi, signer)
+      const priceInWei = ethers.parseUnits(form.price, 'ether')
+      const transaction = await contract.createToken(tokenURI, priceInWei)
+      await transaction.wait()
+      alert("NFT created successfully!")
     } catch (error) {
-      console.error("Error creating NFT:", error);
-      alert("An error occurred while creating the NFT.");
+      console.error("Error creating NFT:", error)
+      alert("An error occurred while creating the NFT.")
     }
-  };
+  }
 
   return (
     <div>
       <Header />
       <div className="min-h-screen bg-black text-cyan-400 flex items-center justify-center p-4">
         <div className="w-full max-w-6xl lg:grid lg:grid-cols-2 gap-8 rounded-xl overflow-hidden backdrop-blur-xl bg-black bg-opacity-30 shadow-2xl border border-cyan-500/20">
+          {/* Form Section */}
           <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
             <div className="w-full max-w-md space-y-8">
               <div className="text-center">
@@ -120,7 +111,7 @@ export default function NFTCreationForm() {
                       placeholder="My Awesome NFT"
                       required
                       className="mt-1 bg-black bg-opacity-50 border-cyan-500/50 text-cyan-300 placeholder-cyan-700"
-                      onChange={(e) => handleChange(e as React.ChangeEvent<HTMLInputElement>)}
+                      onChange={handleChange}
                     />
                   </div>
                   <div>
@@ -163,13 +154,25 @@ export default function NFTCreationForm() {
                 {!account ? (
                   <Button onClick={connectWallet} className="w-full mt-4">Connect Wallet</Button>
                 ) : (
-                  <Button type="submit" className="w-full mt-4 bg-cyan-600">Create NFT</Button>
+                  <Button type="submit" className="w-full mt-4 bg-cyan-600 hover:bg-cyan-700">Create NFT</Button>
                 )}
               </form>
             </div>
           </div>
+
+          {/* Animated Background Section */}
+          <div className="relative h-full w-full overflow-hidden bg-slate-900 flex flex-col items-center justify-center">
+            <div className="absolute inset-0 w-full h-full bg-slate-900 z-20 [mask-image:radial-gradient(transparent,white)] pointer-events-none" />
+            <Boxes />
+            <h1 className={cn("md:text-4xl text-xl text-white relative z-20")}>
+              Create Your NFT
+            </h1>
+            <p className="text-center mt-2 text-neutral-300 relative z-20 px-4">
+              Transform your digital art into unique blockchain assets
+            </p>
+          </div>
         </div>
       </div>
     </div>
-  );
+  )
 }

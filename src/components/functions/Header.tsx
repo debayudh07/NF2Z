@@ -1,17 +1,11 @@
 import React from 'react'
-
-import Link from "next/link";
-
-import { Button } from "@/components/ui/button";
-
-
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
-
-import { Web3Provider } from '@ethersproject/providers';
-import { formatEther } from '@ethersproject/units';
-import { useWallet } from '@/app/_contexts/WalletContext';
+import { Web3Provider } from '@ethersproject/providers'
+import { formatEther } from '@ethersproject/units'
+import { useWallet } from '@/app/_contexts/WalletContext'
 import {
- 
   ArrowUpRight,
   Wallet,
   CreditCard,
@@ -21,10 +15,10 @@ import {
   Search,
   Users,
   ListPlus,
-
+  Settings,
   Image as ImageIcon,
 } from "lucide-react"
-
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,25 +29,26 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-const Header = () => {
-    const { account, connectWallet, disconnectWallet } = useWallet();
-  const [balance, setBalance] = useState<string>('0.00 ETH');
 
+const Header = () => {
+  const { account, connectWallet, disconnectWallet, profilePicture } = useWallet()
+  const [balance, setBalance] = useState<string>('0.00 ETH')
 
   useEffect(() => {
     const fetchBalance = async () => {
       if (account && window.ethereum) {
-        const provider = new Web3Provider(window.ethereum);
-        const balanceInWei = await provider.getBalance(account);
-        const balanceInEth = parseFloat(formatEther(balanceInWei)).toFixed(4);
-        setBalance(`${balanceInEth} ETH`);
+        const provider = new Web3Provider(window.ethereum)
+        const balanceInWei = await provider.getBalance(account)
+        const balanceInEth = parseFloat(formatEther(balanceInWei)).toFixed(4)
+        setBalance(`${balanceInEth} ETH`)
       }
-    };
+    }
     
     if (account) {
-      fetchBalance();
+      fetchBalance()
     }
-  }, [account]);
+  }, [account])
+
   return (
     <div>
       <header className="sticky top-0 flex h-16 items-center gap-4 border-b border-sky-800 bg-black px-4 md:px-6">
@@ -90,6 +85,7 @@ const Header = () => {
             Create
           </Link>
         </nav>
+        
         <Sheet>
           <SheetTrigger asChild>
             <Button
@@ -134,6 +130,7 @@ const Header = () => {
             </nav>
           </SheetContent>
         </Sheet>
+        
         <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
           <form className="ml-auto flex-1 sm:flex-initial">
             <div className="relative">
@@ -145,52 +142,55 @@ const Header = () => {
               />
             </div>
           </form>
+          
           <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          size="icon"
-          className="rounded-full bg-black text-sky-300 border-sky-800"
-        >
-          <Wallet className="h-5 w-5" />
-          <span className="sr-only">Toggle wallet menu</span>
-        </Button>
-      </DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-full hover:bg-sky-900/10"
+              >
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={profilePicture || undefined} />
+                  <AvatarFallback className="bg-sky-900 text-sky-100">
+                    {account ? account.slice(0, 2).toUpperCase() : 'NA'}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="bg-black text-sky-300 border-sky-800">
-        <DropdownMenuLabel>Wallet</DropdownMenuLabel>
-        <DropdownMenuSeparator className="bg-sky-800" />
+            <DropdownMenuContent align="end" className="w-56 bg-black text-sky-300 border-sky-800">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-sky-800" />
 
-        {account ? (
-          <>
-            <DropdownMenuItem>
-              <DollarSign className="mr-2 h-4 w-4" />
-              <span>Balance: {balance}</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => disconnectWallet()}>
-              <ArrowUpRight className="mr-2 h-4 w-4" />
-              <span>Disconnect</span>
-            </DropdownMenuItem>
-          </>
-        ) : (
-          <DropdownMenuItem onClick={() => connectWallet()}>
-            <CreditCard className="mr-2 h-4 w-4" />
-            <span>Connect Wallet</span>
-          </DropdownMenuItem>
-        )}
-
-        <DropdownMenuSeparator className="bg-sky-800" />
-        <DropdownMenuItem>
-          <Users className="mr-2 h-4 w-4" />
-          <span>Account</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem>
-          <ListPlus className="mr-2 h-4 w-4" />
-          <span>List NFT</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-
+              {account ? (
+                <>
+                  <DropdownMenuItem>
+                    <DollarSign className="mr-2 h-4 w-4" />
+                    <span>Balance: {balance}</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Users className="mr-2 h-4 w-4" />
+                    <Link href="/acc">Profile Settings</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <ListPlus className="mr-2 h-4 w-4" />
+                    <Link href="/createnft">List NFT</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-sky-800" />
+                  <DropdownMenuItem className="text-red-500" onClick={() => disconnectWallet()}>
+                    <ArrowUpRight className="mr-2 h-4 w-4" />
+                    <span>Disconnect</span>
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <DropdownMenuItem onClick={() => connectWallet()}>
+                  <Wallet className="mr-2 h-4 w-4" />
+                  <span>Connect Wallet</span>
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
     </div>
