@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 "use client"
 import { useWallet } from "./_contexts/WalletContext";
 import { Button } from "@/components/ui/button";

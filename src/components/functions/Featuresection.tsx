@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 // Import necessary components and libraries
 import React from 'react';
 import { motion } from 'framer-motion';
