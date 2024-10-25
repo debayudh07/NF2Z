@@ -1,6 +1,6 @@
 /* eslint-disable */
 
-"use client"
+"use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Web3Provider } from '@ethersproject/providers';
@@ -51,7 +51,6 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     if (window.ethereum) {
       const handleAccountsChanged = (accounts: string[]) => {
         if (accounts.length === 0) {
-          // User disconnected their wallet
           disconnectWallet();
         } else {
           setAccount(accounts[0]);
@@ -60,7 +59,6 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
 
       const handleChainChanged = (newChainId: string) => {
         setChainId(newChainId);
-        // Reload the page to refresh all states
         window.location.reload();
       };
 
@@ -89,7 +87,6 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
         setChainId(network.chainId.toString());
         setAccount(accounts[0]);
 
-        // Load saved profile picture for this account
         const savedProfilePicture = localStorage.getItem(`profilePicture_${accounts[0]}`);
         if (savedProfilePicture) {
           setProfilePicture(savedProfilePicture);
@@ -101,14 +98,15 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
         setIsConnecting(false);
       }
     } else {
-      throw new Error('MetaMask not detected. Please install MetaMask!');
+      // If on mobile and MetaMask isn't detected, try opening MetaMask mobile app
+      window.location.href = "https://metamask.app.link/dapp/" + window.location.href;
     }
   };
 
   const disconnectWallet = () => {
     setAccount(null);
     setProfilePicture(null);
-    localStorage.removeItem(`profilePicture_${account}`);
+    if (account) localStorage.removeItem(`profilePicture_${account}`);
   };
 
   const updateProfilePicture = (url: string | null) => {
@@ -131,7 +129,6 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
         params: [{ chainId: targetChainId }],
       });
     } catch (error: any) {
-      // This error code indicates that the chain has not been added to MetaMask
       if (error.code === 4902) {
         try {
           await window.ethereum.request({
@@ -139,15 +136,9 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
             params: [
               {
                 chainId: targetChainId,
-                // Add other parameters based on the network you want to add
-                // This is an example for Mumbai testnet
                 rpcUrls: ['https://rpc-mumbai.maticvigil.com/'],
                 chainName: 'Mumbai Testnet',
-                nativeCurrency: {
-                  name: 'MATIC',
-                  symbol: 'MATIC',
-                  decimals: 18
-                },
+                nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
                 blockExplorerUrls: ['https://mumbai.polygonscan.com/']
               },
             ],
@@ -171,7 +162,6 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
         const network = await provider.getNetwork();
         setChainId(network.chainId.toString());
 
-        // Load saved profile picture for this account
         const savedProfilePicture = localStorage.getItem(`profilePicture_${accounts[0]}`);
         if (savedProfilePicture) {
           setProfilePicture(savedProfilePicture);
