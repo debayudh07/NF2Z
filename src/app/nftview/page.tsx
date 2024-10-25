@@ -129,79 +129,75 @@ export default function NFTViewer() {
           NFT Gallery
         </h1>
         
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <Loader2 className="w-16 h-16 text-cyan-400 animate-spin" />
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {nfts.map((nft) => (
-              <motion.div
-                key={nft.tokenId}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="flex justify-center"
+        {!loading && (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    {nfts.slice(1).map((nft) => (  // Start mapping from the second item
+      <motion.div
+        key={nft.tokenId}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex justify-center"
+      >
+        <CardContainer className="inter-var">
+          <CardBody className="bg-gradient-to-br from-gray-800 to-gray-900 relative group/card hover:shadow-2xl hover:shadow-cyan-500/[0.1] border-white/[0.2] w-full rounded-xl p-6 border h-[320px] flex flex-col justify-between">
+            <div className="flex flex-row gap-4">
+              <CardItem
+                translateZ="100"
+                className="w-1/2 flex-shrink-0"
+                onClick={() => setSelectedNFT(nft)}
               >
-                <CardContainer className="inter-var">
-                  <CardBody className="bg-gradient-to-br from-gray-800 to-gray-900 relative group/card hover:shadow-2xl hover:shadow-cyan-500/[0.1] border-white/[0.2] w-full rounded-xl p-6 border h-[320px] flex flex-col justify-between">
-                    <div className="flex flex-row gap-4">
-                      <CardItem
-                        translateZ="100"
-                        className="w-1/2 flex-shrink-0"
-                        onClick={() => setSelectedNFT(nft)}
-                      >
-                        <div className="aspect-[3/4] w-full relative overflow-hidden rounded-xl">
-                          <img
-                            src={nft.image}
-                            className="absolute inset-0 w-full h-full object-cover group-hover/card:shadow-xl transition-transform duration-300 group-hover/card:scale-110"
-                            alt={nft.name}
-                          />
-                        </div>
-                      </CardItem>
-                      <div className="w-1/2 flex flex-col justify-between">
-                        <CardItem
-                          translateZ="50"
-                          className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600 h-14 overflow-hidden"
-                        >
-                          {nft.name}
-                        </CardItem>
-                        <CardItem
-                          translateZ="50"
-                          className="text-cyan-400 font-semibold mt-2"
-                        >
-                          Price: {nft.price}
-                        </CardItem>
-                      </div>
-                    </div>
+                <div className="aspect-[3/4] w-full relative overflow-hidden rounded-xl">
+                  <img
+                    src={nft.image}
+                    className="absolute inset-0 w-full h-full object-cover group-hover/card:shadow-xl transition-transform duration-300 group-hover/card:scale-110"
+                    alt={nft.name}
+                  />
+                </div>
+              </CardItem>
+              <div className="w-1/2 flex flex-col justify-between">
+                <CardItem
+                  translateZ="50"
+                  className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600 h-14 overflow-hidden"
+                >
+                  {nft.name}
+                </CardItem>
+                <CardItem
+                  translateZ="50"
+                  className="text-cyan-400 font-semibold mt-2"
+                >
+                  Price: {nft.price}
+                </CardItem>
+              </div>
+            </div>
 
-                    <div className="flex justify-between items-center mt-4 space-x-4">
-                      <CardItem
-                        translateZ={20}
-                        as="button"
-                        className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white text-sm font-bold flex-1 transition-colors duration-300"
-                        onClick={() => setSelectedNFT(nft)}
-                      >
-                        View Details
-                      </CardItem>
-                      <CardItem
-                        translateZ={20}
-                        as="button"
-                        className="px-4 py-2 rounded-xl bg-white text-gray-900 text-sm font-bold flex-1 transition-colors duration-300 hover:bg-gray-200"
-                        onClick={() => {
-                          setSellingNFT(nft)
-                          setSellPrice('')
-                        }}
-                      >
-                        Sell
-                      </CardItem>
-                    </div>
-                  </CardBody>
-                </CardContainer>
-              </motion.div>
-            ))}
-          </div>
-        )}
+            <div className="flex justify-between items-center mt-4 space-x-4">
+              <CardItem
+                translateZ={20}
+                as="button"
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white text-sm font-bold flex-1 transition-colors duration-300"
+                onClick={() => setSelectedNFT(nft)}
+              >
+                View Details
+              </CardItem>
+              <CardItem
+                translateZ={20}
+                as="button"
+                className="px-4 py-2 rounded-xl bg-white text-gray-900 text-sm font-bold flex-1 transition-colors duration-300 hover:bg-gray-200"
+                onClick={() => {
+                  setSellingNFT(nft)
+                  setSellPrice('')
+                }}
+              >
+                Sell
+              </CardItem>
+            </div>
+          </CardBody>
+        </CardContainer>
+      </motion.div>
+    ))}
+  </div>
+)}
 
         <AnimatePresence>
           {selectedNFT && (
