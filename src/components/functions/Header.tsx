@@ -69,16 +69,10 @@ const Header = () => {
             Dashboard
           </Link>
           <Link
-            href="#"
-            className="text-sky-500 transition-colors hover:text-sky-300"
-          >
-            Explore
-          </Link>
-          <Link
             href="/nftview"
             className="text-sky-500 transition-colors hover:text-sky-300"
           >
-            My NFTs
+             NFTs
           </Link>
           <Link
             href="/createnft"
