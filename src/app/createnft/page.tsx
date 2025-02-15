@@ -32,7 +32,7 @@ export default function NFTCreationForm() {
     })
   }
 
-  const uploadToPinata = async () => {
+  const uploadImageToPinata = async () => {
     const formData = new FormData()
     if (form.image) {
       formData.append("file", form.image)
@@ -47,9 +47,31 @@ export default function NFTCreationForm() {
           "Content-Type": "multipart/form-data",
         },
       })
-      return `ipfs://${res.data.IpfsHash}`
+      return res.data.IpfsHash
     } catch (error) {
       console.error("Error uploading image to IPFS:", error)
+      return null
+    }
+  }
+
+  const uploadMetadataToPinata = async (imageHash: any) => {
+    const metadata = {
+      name: form.name,
+      description: form.description,
+      image: `ipfs://${imageHash}`,
+    }
+    
+    try {
+      const res = await axios.post("https://api.pinata.cloud/pinning/pinJSONToIPFS", metadata, {
+        headers: {
+          "pinata_api_key": process.env.NEXT_PUBLIC_PINATA_API_KEY,
+          "pinata_secret_api_key": process.env.NEXT_PUBLIC_PINATA_SECRET_API_KEY,
+          "Content-Type": "application/json",
+        },
+      })
+      return `ipfs://${res.data.IpfsHash}`
+    } catch (error) {
+      console.error("Error uploading metadata to IPFS:", error)
       return null
     }
   }
@@ -65,9 +87,17 @@ export default function NFTCreationForm() {
     }
 
     try {
-      const tokenURI = await uploadToPinata()
-      if (!tokenURI) {
+      // Step 1: Upload the image file
+      const imageHash = await uploadImageToPinata()
+      if (!imageHash) {
         alert("Image upload failed.")
+        return
+      }
+      
+      // Step 2: Upload the metadata (including name, description, and image reference)
+      const tokenURI = await uploadMetadataToPinata(imageHash)
+      if (!tokenURI) {
+        alert("Metadata upload failed.")
         return
       }
 

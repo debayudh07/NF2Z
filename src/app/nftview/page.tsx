@@ -20,6 +20,7 @@ const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS
 interface NFT {
   tokenId: string;
   name: string;
+  description: string;
   image: string;
   price: string;
 }
@@ -56,12 +57,16 @@ export default function NFTViewer() {
 
           let metadata
           let imageUrl
+          let name = `NFT ${nft.tokenId}`
+          let description = ''
 
           if (contentType && contentType.includes("application/json")) {
             metadata = await response.json()
             imageUrl = metadata.image
+            name = metadata.name || name
+            description = metadata.description || ''
           } else if (contentType && contentType.includes("image/")) {
-            metadata = { name: `NFT ${nft.tokenId}` }
+            metadata = { name, description }
             imageUrl = httpUrl
           } else {
             throw new Error(`Unexpected content type: ${contentType}`)
@@ -73,7 +78,8 @@ export default function NFTViewer() {
 
           return {
             tokenId: nft.tokenId.toString(),
-            name: metadata.name || `NFT ${nft.tokenId}`,
+            name,
+            description,
             image: imageUrl,
             price: formatEther(nft.price) + ' ETH'
           }
@@ -203,8 +209,6 @@ export default function NFTViewer() {
           </div>
         )}
 
-
-
         <AnimatePresence>
           {selectedNFT && (
             <Dialog open={!!selectedNFT} onOpenChange={() => setSelectedNFT(null)}>
@@ -217,6 +221,12 @@ export default function NFTViewer() {
                 </DialogHeader>
                 <div className="mt-4">
                   <img src={selectedNFT.image} alt={selectedNFT.name} className="w-full h-64 object-cover rounded-lg mb-4 shadow-lg shadow-cyan-500/20" />
+                  {selectedNFT.description && (
+                    <div className="mb-4">
+                      <h3 className="text-white font-semibold mb-1">Description:</h3>
+                      <p className="text-gray-300">{selectedNFT.description}</p>
+                    </div>
+                  )}
                   <p className="text-cyan-400 font-semibold">Price: {selectedNFT.price}</p>
                 </div>
                 <div className="mt-6 flex justify-end">
