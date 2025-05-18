@@ -1,15 +1,11 @@
-/* eslint-disable */
-
-import React from 'react'
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { useState, useEffect } from "react"
-import { Web3Provider } from '@ethersproject/providers'
-import { formatEther } from '@ethersproject/units'
-import { useWallet } from '@/app/_contexts/WalletContext'
+import React, { useState, useEffect } from 'react';
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { formatEther } from '@ethersproject/units';
+import { useAccount, useBalance, useDisconnect } from 'wagmi';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import {
   ArrowUpRight,
-  Wallet,
   CreditCard,
   DollarSign,
   Menu,
@@ -19,8 +15,8 @@ import {
   ListPlus,
   Settings,
   Image as ImageIcon,
-} from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+} from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,28 +24,21 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const Header = () => {
-  const { account, connectWallet, disconnectWallet, profilePicture } = useWallet()
-  const [balance, setBalance] = useState<string>('0.00 ETH')
-
-  useEffect(() => {
-    const fetchBalance = async () => {
-      if (account && window.ethereum) {
-        const provider = new Web3Provider(window.ethereum)
-        const balanceInWei = await provider.getBalance(account)
-        const balanceInEth = parseFloat(formatEther(balanceInWei)).toFixed(4)
-        setBalance(`${balanceInEth} ETH`)
-      }
-    }
-    
-    if (account) {
-      fetchBalance()
-    }
-  }, [account])
+  const { address, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
+  const { data: balanceData } = useBalance({
+    address: address,
+  });
+  
+  // Format the balance
+  const formattedBalance = balanceData 
+    ? `${parseFloat(formatEther(balanceData.value)).toFixed(4)} ${balanceData.symbol}`
+    : '0.00 ETH';
 
   return (
     <div>
@@ -139,58 +128,52 @@ const Header = () => {
             </div>
           </form>
           
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full hover:bg-sky-900/10"
-              >
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={profilePicture || undefined} />
-                  <AvatarFallback className="bg-sky-900 text-sky-100">
-                    {account ? account.slice(0, 2).toUpperCase() : 'NA'}
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
+          {isConnected ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full hover:bg-sky-900/10"
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={undefined} />
+                    <AvatarFallback className="bg-sky-900 text-sky-100">
+                      {address ? address.slice(0, 2).toUpperCase() : 'NA'}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
 
-            <DropdownMenuContent align="end" className="w-56 bg-black text-sky-300 border-sky-800">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-sky-800" />
-
-              {account ? (
-                <>
-                  <DropdownMenuItem>
-                    <DollarSign className="mr-2 h-4 w-4" />
-                    <span>Balance: {balance}</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Users className="mr-2 h-4 w-4" />
-                    <Link href="/acc">Profile Settings</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <ListPlus className="mr-2 h-4 w-4" />
-                    <Link href="/createnft">List NFT</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-sky-800" />
-                  <DropdownMenuItem className="text-red-500" onClick={() => disconnectWallet()}>
-                    <ArrowUpRight className="mr-2 h-4 w-4" />
-                    <span>Disconnect</span>
-                  </DropdownMenuItem>
-                </>
-              ) : (
-                <DropdownMenuItem onClick={() => connectWallet()}>
-                  <Wallet className="mr-2 h-4 w-4" />
-                  <span>Connect Wallet</span>
+              <DropdownMenuContent align="end" className="w-56 bg-black text-sky-300 border-sky-800">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-sky-800" />
+                <DropdownMenuItem>
+                  <DollarSign className="mr-2 h-4 w-4" />
+                  <span>Balance: {formattedBalance}</span>
                 </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuItem>
+                  <Users className="mr-2 h-4 w-4" />
+                  <Link href="/acc">Profile Settings</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <ListPlus className="mr-2 h-4 w-4" />
+                  <Link href="/createnft">List NFT</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-sky-800" />
+                <DropdownMenuItem className="text-red-500" onClick={() => disconnect()}>
+                  <ArrowUpRight className="mr-2 h-4 w-4" />
+                  <span>Disconnect</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <ConnectButton />
+          )}
         </div>
       </header>
     </div>
-  )
-}
+  );
+};
 
-export default Header
+export default Header;

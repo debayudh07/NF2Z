@@ -1,5 +1,3 @@
-/* eslint-disable */
-
 "use client"
 import React, { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -10,18 +8,26 @@ import { Boxes } from "@/components/ui/background-boxes"
 import { cn } from "@/lib/utils"
 import Header from "@/components/functions/Header"
 import axios from "axios"
-import { useWallet } from "../_contexts/WalletContext"
 import contractABi from "../contractABI"
 import { ethers } from "ethers"
+import {
+  ConnectButton
+} from '@rainbow-me/rainbowkit'
+import { useAccount, usePublicClient, useWalletClient } from 'wagmi'
+import { BrowserProvider } from 'ethers'
 
 export default function NFTCreationForm() {
-  const { account, connectWallet } = useWallet()
+  const { address, isConnected } = useAccount()
+  const publicClient = usePublicClient()
+  const { data: walletClient } = useWalletClient()
+  const signer = walletClient ? new BrowserProvider(walletClient as any).getSigner() : undefined
   const [form, setForm] = useState({
     name: "",
     description: "",
     price: "",
     image: null,
   })
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleChange = (e: { target: { files?: any; name?: any; value?: any } }) => {
     const { name, value } = e.target
@@ -81,16 +87,19 @@ export default function NFTCreationForm() {
   const createNFT = async (e: { preventDefault: () => void }) => {
     e.preventDefault()
 
-    if (!account) {
+    if (!isConnected || !signer) {
       alert("Please connect your wallet first!")
       return
     }
+
+    setIsLoading(true)
 
     try {
       // Step 1: Upload the image file
       const imageHash = await uploadImageToPinata()
       if (!imageHash) {
         alert("Image upload failed.")
+        setIsLoading(false)
         return
       }
       
@@ -98,25 +107,39 @@ export default function NFTCreationForm() {
       const tokenURI = await uploadMetadataToPinata(imageHash)
       if (!tokenURI) {
         alert("Metadata upload failed.")
+        setIsLoading(false)
         return
       }
-
-      const provider = new ethers.BrowserProvider(window.ethereum)
-      const signer = await provider.getSigner()
 
       if (!contractAddress) {
         alert("Contract address is not defined.")
+        setIsLoading(false)
         return
       }
 
-      const contract = new ethers.Contract(contractAddress, contractABi, signer)
+      const contract = new ethers.Contract(contractAddress, contractABi, await signer)
       const priceInWei = ethers.parseUnits(form.price, 'ether')
+      
+      // Request transaction creation
       const transaction = await contract.createToken(tokenURI, priceInWei)
-      await transaction.wait()
-      alert("NFT created successfully!")
+      
+      // Wait for transaction to be confirmed
+      const receipt = await transaction.wait()
+      
+      // Reset form after successful NFT creation
+      setForm({
+        name: "",
+        description: "",
+        price: "",
+        image: null,
+      })
+      
+      alert(`NFT created successfully! Transaction hash: ${receipt.hash}`)
     } catch (error) {
       console.error("Error creating NFT:", error)
       alert("An error occurred while creating the NFT.")
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -140,6 +163,7 @@ export default function NFTCreationForm() {
                       id="nft-name"
                       name="name"
                       type="text"
+                      value={form.name}
                       placeholder="My Awesome NFT"
                       required
                       className="mt-1 bg-black bg-opacity-50 border-cyan-500/50 text-cyan-300 placeholder-cyan-700"
@@ -151,6 +175,7 @@ export default function NFTCreationForm() {
                     <Textarea
                       id="description"
                       name="description"
+                      value={form.description}
                       placeholder="Describe your NFT..."
                       required
                       className="mt-1 bg-black bg-opacity-50 border-cyan-500/50 text-cyan-300 placeholder-cyan-700"
@@ -163,6 +188,7 @@ export default function NFTCreationForm() {
                       id="price"
                       name="price"
                       type="number"
+                      value={form.price}
                       step="0.01"
                       placeholder="0.05"
                       required
@@ -183,11 +209,22 @@ export default function NFTCreationForm() {
                     />
                   </div>
                 </div>
-                {!account ? (
-                  <Button onClick={connectWallet} className="w-full mt-4">Connect Wallet</Button>
-                ) : (
-                  <Button type="submit" className="w-full mt-4 bg-cyan-600 hover:bg-cyan-700">Create NFT</Button>
-                )}
+                
+                <div className="pt-2">
+                  {!isConnected ? (
+                    <div className="flex justify-center">
+                      <ConnectButton />
+                    </div>
+                  ) : (
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-cyan-600 hover:bg-cyan-700" 
+                      disabled={isLoading}
+                    >
+                      {isLoading ? "Creating NFT..." : "Create NFT"}
+                    </Button>
+                  )}
+                </div>
               </form>
             </div>
           </div>
@@ -202,6 +239,11 @@ export default function NFTCreationForm() {
             <p className="text-center mt-2 text-neutral-300 relative z-20 px-4">
               Transform your digital art into unique blockchain assets
             </p>
+            {isConnected && (
+              <div className="mt-4 text-sm text-cyan-300 relative z-20">
+                Connected: {address?.slice(0, 6)}...{address?.slice(-4)}
+              </div>
+            )}
           </div>
         </div>
       </div>

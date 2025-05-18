@@ -1,7 +1,6 @@
 /* eslint-disable */
 
 "use client"
-import { useWallet } from "./_contexts/WalletContext";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { motion } from 'framer-motion';
@@ -9,29 +8,30 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { ChevronRight, Wallet, Image as ImageIcon, Zap, Menu, X } from 'lucide-react';
 import { TextHoverEffect } from "@/components/ui/text-hover-effect";
-
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useAccount, useDisconnect } from 'wagmi';
 
 export default function Homepage() {
-  const { account, connectWallet, disconnectWallet } = useWallet();
+  const { address } = useAccount();
+  const { disconnect } = useDisconnect();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isWalletOpen, setIsWalletOpen] = useState(false);
 
   const navItems = ['Explore', 'Create', 'Community'];
   const features = [
     {
       title: 'Feature 1',
       description: 'List your NFTs in seconds',
-      icon: Zap, // Replace with actual icon component
+      icon: Zap,
     },
     {
       title: 'Feature 2',
       description: 'Buy and sell NFTs with ease',
-      icon: Wallet, // Replace with actual icon component
+      icon: Wallet,
     },
     {
       title: 'Feature 3',
       description: 'Discover one-of-a-kind digital art',
-      icon: ImageIcon, // Replace with actual icon component
+      icon: ImageIcon,
     },
   ];
 
@@ -48,15 +48,65 @@ export default function Homepage() {
               </Link>
             ))}
 
-            {account ? (
-              <Button onClick={disconnectWallet} variant="outline" className="bg-red-500 text-black hover:bg-red-400 hover:text-black">
-                Disconnect ({account.slice(0, 6)}...{account.slice(-4)})
-              </Button>
-            ) : (
-              <Button onClick={connectWallet} variant="outline" className="bg-cyan-500 text-black hover:bg-cyan-400 hover:text-black">
-                Connect Wallet
-              </Button>
-            )}
+            <ConnectButton.Custom>
+              {({
+                account,
+                chain,
+                openAccountModal,
+                openChainModal,
+                openConnectModal,
+                mounted,
+              }) => {
+                const ready = mounted;
+                const connected = ready && account && chain;
+
+                return (
+                  <div
+                    {...(!ready && {
+                      'aria-hidden': true,
+                      style: {
+                        opacity: 0,
+                        pointerEvents: 'none',
+                        userSelect: 'none',
+                      },
+                    })}
+                  >
+                    {(() => {
+                      if (!connected) {
+                        return (
+                          <Button 
+                            onClick={openConnectModal} 
+                            variant="outline" 
+                            className="bg-cyan-500 text-black hover:bg-cyan-400 hover:text-black"
+                          >
+                            Connect Wallet
+                          </Button>
+                        );
+                      }
+
+                      return (
+                        <div className="flex items-center gap-3">
+                          <Button 
+                            onClick={openChainModal}
+                            variant="outline" 
+                            className="bg-cyan-800 text-white hover:bg-cyan-700"
+                          >
+                            {chain.name}
+                          </Button>
+                          <Button 
+                            onClick={openAccountModal}
+                            variant="outline" 
+                            className="bg-cyan-500 text-black hover:bg-cyan-400 hover:text-black"
+                          >
+                            {account.displayName}
+                          </Button>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                );
+              }}
+            </ConnectButton.Custom>
           </div>
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -80,26 +130,9 @@ export default function Homepage() {
               {item}
             </Link>
           ))}
-          <Dialog open={isWalletOpen} onOpenChange={setIsWalletOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="bg-cyan-500 text-black hover:bg-cyan-400 hover:text-black w-full">
-                Connect Wallet
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] bg-black border border-cyan-500">
-              <DialogHeader>
-                <DialogTitle className="text-cyan-400">Connect your wallet</DialogTitle>
-                <DialogDescription className="text-cyan-300">
-                  Choose a wallet to connect to our NFT marketplace.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <Button onClick={connectWallet} className="bg-cyan-500 text-black hover:bg-cyan-400">
-                  MetaMask
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <div className="w-full">
+            <ConnectButton showBalance={false} chainStatus="icon" />
+          </div>
         </div>
       </motion.div>
 
